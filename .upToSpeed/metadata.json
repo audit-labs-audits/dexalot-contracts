@@ -2,41 +2,18 @@
   "packageName": "dexalot-contracts",
   "packageVersion": 1,
   "hash": "a2ef6d002478351fb72837daefab9a73438eb1ca",
-  "numberOfTours": 6,
+  "numberOfTours": 2,
   "titleOfTours": [
     "1.1: Solana Program: State and Core Data Structures",
-    "1.2: Solana Program: Initialization and User Onboarding",
-    "1.3: Solana Program: Cross-Chain Communication (LayerZero)",
-    "1.4: Solana Program: On-Chain Swaps",
-    "1.5: Solana Program: Cross-Chain Swaps",
-    "1.6: Solana Program: Admin and Configuration"
+    "1.2: Want to learn more?"
   ],
-  "totalNumberOfSteps": 110,
+  "totalNumberOfSteps": 19,
   "filesCovered": [
     "solana/programs/dexalot/src/state.rs",
     "solana/programs/dexalot/src/instructions/swap/orders/swap_order.rs",
     "solana/programs/dexalot/src/instructions/swap/orders/cross_swap_order.rs",
     "solana/programs/dexalot/src/errors.rs",
-    "solana/programs/dexalot/src/events.rs",
-    "solana/programs/dexalot/src/instructions/initialize.rs",
-    "solana/programs/dexalot/src/instructions/create_account.rs",
-    "solana/programs/dexalot/src/instructions/deposit.rs",
-    "solana/programs/dexalot/src/instructions/claim_balance.rs",
-    "solana/programs/dexalot/src/instructions/lz_receive.rs",
-    "solana/programs/dexalot/src/cpi_utils.rs",
-    "solana/programs/dexalot/src/xfer.rs",
-    "solana/programs/dexalot/src/instructions/process_xfer_payload.rs",
-    "solana/programs/dexalot/src/instructions/swap/swap_instructions/cross_swap.rs",
-    "solana/programs/dexalot/src/instructions/swap/swap_instructions/swap.rs",
-    "solana/programs/dexalot/src/instructions/swap/utils.rs",
-    "solana/programs/dexalot/src/instructions/swap/swap_instructions/swap_queue.rs",
-    "solana/programs/dexalot/src/instructions/swap/swap_instructions/swap_expiry.rs",
-    "solana/programs/dexalot/src/instructions/roles.rs",
-    "solana/programs/dexalot/src/instructions/global_config.rs",
-    "solana/programs/dexalot/src/instructions/set_remote.rs",
-    "solana/programs/dexalot/src/instructions/add_destination.rs",
-    "solana/programs/dexalot/src/instructions/token.rs",
-    "solana/programs/dexalot/src/instructions/banned_account.rs"
+    "solana/programs/dexalot/src/events.rs"
   ],
-  "numberOfFilesCovered": 24
+  "numberOfFilesCovered": 5
 }
