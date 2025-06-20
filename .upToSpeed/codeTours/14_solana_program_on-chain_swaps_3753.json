@@ -1,0 +1,213 @@
+{
+  "title": "1.4: Solana Program: On-Chain Swaps",
+  "id": "esgGNtL4UK3WWWDBR8xhct5OJO6jVCdwuav8IG5WTkU=",
+  "originalId": 3753,
+  "position": 39,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "This walkthrough explains `Dexalot`’s on-chain swap flow end-to-end: a signed off-chain order enters `swap`, is validated & executed immediately (**Immediate Fill**), or archived in a queue (`PendingSwap`), and stale orders are expired by a rebalancer.",
+      "title": "",
+      "id": "44589"
+    },
+    {
+      "type": "highlight",
+      "description": "The `Swap<'info>` context (lines 10–18) lists all accounts:\n- `sender`: signer placing the order\n- `taker` & `dest_trader`: trading parties\n- PDA `completed_swaps_entry` (seeded by `[COMPLETED_SWAPS_SEED, nonce, dest_trader]`) blocks replays\n- Vault PDAs (`spl_vault`, `sol_vault`), token mints, ATA accounts\n- `clock` sysvar and `portfolio` for global flags",
+      "file": "solana/programs/dexalot/src/instructions/swap/swap_instructions/swap.rs",
+      "highlight": [
+        {
+          "start": 10,
+          "end": 18
+        }
+      ],
+      "title": "",
+      "id": "44590"
+    },
+    {
+      "type": "highlight",
+      "description": "At runtime (lines 76–84), `swap()`:\n1. Checks `global_config.program_paused`—program must be live\n2. Validates all **ATAs** via `check_atas`—ensures correct owners and mints",
+      "file": "solana/programs/dexalot/src/instructions/swap/swap_instructions/swap.rs",
+      "highlight": [
+        {
+          "start": 76,
+          "end": 84
+        }
+      ],
+      "title": "",
+      "id": "44591"
+    },
+    {
+      "type": "highlight",
+      "description": "The code then attempts an **Immediate Fill**, atomically validating and executing the order to move funds and mark it complete.",
+      "file": "solana/programs/dexalot/src/instructions/swap/swap_instructions/swap.rs",
+      "highlight": [
+        {
+          "start": 96,
+          "end": 100
+        }
+      ],
+      "title": "",
+      "id": "44592"
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "solana/programs/dexalot/src/state.rs"
+      ],
+      "description": "Dexalot records completed orders via the `CompletedSwapsEntry` account (lines 105–111), an empty marker keyed by `[COMPLETED_SWAPS_SEED, nonce, trader]`, to prevent replays.",
+      "title": "",
+      "id": "44593"
+    },
+    {
+      "type": "highlight",
+      "description": "After validation, an entry is created in the `CompletedSwaps` map. This marks the order as processed *before* execution to prevent replays.",
+      "file": "solana/programs/dexalot/src/instructions/swap/orders/swap_order.rs",
+      "highlight": [
+        {
+          "start": 75,
+          "end": 83
+        }
+      ],
+      "title": "",
+      "id": "44594"
+    },
+    {
+      "type": "highlight",
+      "description": "If the source asset is native SOL, the program identifies the source (`from`) and destination (`to`) accounts. This prepares for the transfer of the user's SOL into the `sol_vault` PDA escrow.",
+      "file": "solana/programs/dexalot/src/instructions/swap/utils.rs",
+      "highlight": [
+        {
+          "start": 91,
+          "end": 98
+        }
+      ],
+      "title": "",
+      "id": "44595"
+    },
+    {
+      "type": "highlight",
+      "description": "If `src_asset` is **SPL**, `take_funds` builds a CPI `SplTransfer` from user ATA → `spl_vault` ATA, signed by the user or aggregator.",
+      "file": "solana/programs/dexalot/src/instructions/swap/utils.rs",
+      "highlight": [
+        {
+          "start": 116,
+          "end": 124
+        }
+      ],
+      "title": "",
+      "id": "44596"
+    },
+    {
+      "type": "highlight",
+      "description": "When releasing native SOL, the program first checks that the `sol_vault` has sufficient funds to complete the transfer.",
+      "file": "solana/programs/dexalot/src/instructions/swap/utils.rs",
+      "highlight": [
+        {
+          "start": 163,
+          "end": 171
+        }
+      ],
+      "title": "",
+      "id": "44597"
+    },
+    {
+      "type": "highlight",
+      "description": "For `SPL` dest assets (lines 190–198), `release_funds` uses a signed `SPL` token transfer from `spl_vault` ATA → user ATA, signing with PDA seeds [`SPL_VAULT_SEED`, bump].",
+      "file": "solana/programs/dexalot/src/instructions/swap/utils.rs",
+      "highlight": [
+        {
+          "start": 190,
+          "end": 198
+        }
+      ],
+      "title": "",
+      "id": "44598"
+    },
+    {
+      "type": "textOnly",
+      "description": "There is no on-chain order book matching in `swap()`—clients/back-end match orders off-chain and invoke `swap` only when a fill is ready. For unfilled orders, `Dexalot` provides a queue API.",
+      "title": "",
+      "id": "44599"
+    },
+    {
+      "type": "highlight",
+      "description": "The `PendingSwap` account represents a queued order, created when no immediate fill is available.",
+      "file": "solana/programs/dexalot/src/instructions/swap/swap_instructions/swap_queue.rs",
+      "highlight": [
+        {
+          "start": 187,
+          "end": 193
+        }
+      ],
+      "title": "",
+      "id": "44600"
+    },
+    {
+      "type": "highlight",
+      "description": "**`add_to_swap_queue`**\n\nThis function adds the order to the queue. The `airdrop_vault` PDA funds the rent for the new `PendingSwap` PDA.",
+      "file": "solana/programs/dexalot/src/instructions/swap/swap_instructions/swap_queue.rs",
+      "highlight": [
+        {
+          "start": 139,
+          "end": 147
+        }
+      ],
+      "title": "",
+      "id": "44601"
+    },
+    {
+      "type": "highlight",
+      "description": "Then it calls `create_entry::<PendingSwap>` (lines 153–160) to persist the queued order, withdraw rent from `airdrop_vault`, and emit `SwapQueueEvent::Add`.",
+      "file": "solana/programs/dexalot/src/instructions/swap/swap_instructions/swap_queue.rs",
+      "highlight": [
+        {
+          "start": 153,
+          "end": 160
+        }
+      ],
+      "title": "",
+      "id": "44602"
+    },
+    {
+      "type": "highlight",
+      "description": "`remove_from_swap_queue` (lines 49–56) closes the `PendingSwap` PDA (seeded by `[PENDING_SWAPS_SEED, nonce, trader]`), transfers funds out via `XFERSolana`, and emits `SwapQueueEvent::Remove`.",
+      "file": "solana/programs/dexalot/src/instructions/swap/swap_instructions/swap_queue.rs",
+      "highlight": [
+        {
+          "start": 49,
+          "end": 56
+        }
+      ],
+      "title": "",
+      "id": "44603"
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "solana/programs/dexalot/src/instructions/swap/swap_instructions/swap_expiry.rs"
+      ],
+      "description": "To guard against stale orders, `UpdateSwapExpiry` uses `init_if_needed` on the same `CompletedSwapsEntry` PDA (lines 15–23), marking the order as complete without execution.",
+      "title": "",
+      "id": "44604"
+    },
+    {
+      "type": "highlight",
+      "description": "`update_swap_expiry` (lines 46–50) enforces that only a `rebalancer` **PDA** (seeded by `[REBALANCER_SEED, authority]`) can expire orders. The highlighted code verifies the PDA's ownership.",
+      "file": "solana/programs/dexalot/src/instructions/swap/swap_instructions/swap_expiry.rs",
+      "highlight": [
+        {
+          "start": 46,
+          "end": 50
+        }
+      ],
+      "title": "",
+      "id": "44605"
+    },
+    {
+      "type": "textOnly",
+      "description": "Overall flow: client signs an `Order` → calls `swap` for **Immediate Fill** (validate, mark complete, escrow & release) → if no immediate fill, client calls `add_to_swap_queue` → orders fulfilled via `remove_from_swap_queue` → stale orders expire via `update_swap_expiry`.",
+      "title": "",
+      "id": "44606"
+    }
+  ]
+}

@@ -1,0 +1,181 @@
+{
+  "title": "1.2: Solana Program: Initialization and User Onboarding",
+  "id": "b5lfZCmE+r5PZ/H/STa8Gu2wxZt9qV60xTIRCOHwQKs=",
+  "originalId": 3747,
+  "position": 37,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "This walkthrough covers the steps to bootstrap the `DEX` and onboard a user:\n1) one-time program initialization\n2) creating a user account\n3) depositing `SPL tokens`\n4) withdrawing assets back to the wallet.",
+      "title": "",
+      "id": "44146"
+    },
+    {
+      "type": "highlight",
+      "description": "The `initialize` function is called once to set up the core on-chain state. It takes `InitializeParams` (source chain ID, default chain ID, and swap signer) and seeds the `Portfolio` PDA. Inside, it assigns the authority as admin, stores the bump, and configures the initial global settings (`allow_deposit`, `swap_signer`, etc.).",
+      "file": "solana/programs/dexalot/src/instructions/initialize.rs",
+      "highlight": [
+        {
+          "start": 13,
+          "end": 26
+        }
+      ],
+      "title": "",
+      "id": "44147"
+    },
+    {
+      "type": "highlight",
+      "description": "`InitializeParams` holds the three arguments passed by the client: `src_chain_id: u16`, `default_chain_id: u32`, and `swap_signer: [u8;20]`, which is used for cross-chain swap authorization.",
+      "file": "solana/programs/dexalot/src/instructions/initialize.rs",
+      "highlight": [
+        {
+          "start": 65,
+          "end": 70
+        }
+      ],
+      "title": "",
+      "id": "44148"
+    },
+    {
+      "type": "highlight",
+      "description": "The `Initialize` accounts struct defines the accounts created and funded: the `Portfolio` PDA, the `TokenList` PDA, and the `Admin` PDA (all initialized with seeds and bumps), plus the authority signer, `System` program, and the **LayerZero** `endpoint_program`.",
+      "file": "solana/programs/dexalot/src/instructions/initialize.rs",
+      "highlight": [
+        {
+          "start": 72,
+          "end": 82
+        }
+      ],
+      "title": "",
+      "id": "44149"
+    },
+    {
+      "type": "textOnly",
+      "description": "After initialization, clients can create an **on-chain user account** to hold **program-specific user data** before any **token activity**.",
+      "title": "",
+      "id": "44150"
+    },
+    {
+      "type": "highlight",
+      "description": "`create_account` uses `init_if_needed` to allocate a zero-space `AccountInfo` owned by the **system program**. This lets the program reference a stable account for each user without storing additional data yet.",
+      "file": "solana/programs/dexalot/src/instructions/create_account.rs",
+      "highlight": [
+        {
+          "start": 9,
+          "end": 15
+        }
+      ],
+      "title": "",
+      "id": "44151"
+    },
+    {
+      "type": "textOnly",
+      "description": "With the user account in place, the next step is moving SPL tokens into the DEX vault via the `deposit` instruction.",
+      "title": "",
+      "id": "44152"
+    },
+    {
+      "type": "highlight",
+      "description": "The `Deposit` instruction context expects: the user signer, the `Portfolio` PDA, `TokenDetails` for the mint, the SPL vault PDA (`spl_user_funds_vault`), the user's source token ATA (`from`), the vault's token ATA (`to`), plus `token_program`, `banned_account`, `remote` PDA, and the `endpoint_program`.",
+      "file": "solana/programs/dexalot/src/instructions/deposit.rs",
+      "highlight": [
+        {
+          "start": 398,
+          "end": 407
+        }
+      ],
+      "title": "",
+      "id": "44153"
+    },
+    {
+      "type": "highlight",
+      "description": "Before transferring, it enforces critical checks: the user is not banned, the program isn't paused, deposits are allowed, and the `from` account has sufficient balance (`from.amount >= params.amount`).",
+      "file": "solana/programs/dexalot/src/instructions/deposit.rs",
+      "highlight": [
+        {
+          "start": 37,
+          "end": 46
+        }
+      ],
+      "title": "",
+      "id": "44154"
+    },
+    {
+      "type": "highlight",
+      "description": "On pass, it performs `token::transfer` via a CPI, moving `params.amount` of tokens from the user's `ATA` into the vault `ATA` owned by the program.",
+      "file": "solana/programs/dexalot/src/instructions/deposit.rs",
+      "highlight": [
+        {
+          "start": 60,
+          "end": 68
+        }
+      ],
+      "title": "",
+      "id": "44155"
+    },
+    {
+      "type": "highlight",
+      "description": "Immediately after, it emits a `PortfolioUpdatedEvent`, which off-chain listeners (or a cross-chain L1 contract) consume to credit the user's `DEX` balance.",
+      "file": "solana/programs/dexalot/src/instructions/deposit.rs",
+      "highlight": [
+        {
+          "start": 70,
+          "end": 78
+        }
+      ],
+      "title": "",
+      "id": "44156"
+    },
+    {
+      "type": "textOnly",
+      "description": "Finally, deposited funds can be withdrawn back to the user's wallet using `claim_balance`, which handles both SPL tokens and native SOL.",
+      "title": "",
+      "id": "44157"
+    },
+    {
+      "type": "highlight",
+      "description": "`claim_spl_balance` first checks the `rebalancer` PDA is owned by the program and that the `SPL vault` has at least `params.amount`. Violations emit `UnauthorizedSigner` or `NotEnoughSplTokenBalance` errors.",
+      "file": "solana/programs/dexalot/src/instructions/claim_balance.rs",
+      "highlight": [
+        {
+          "start": 64,
+          "end": 73
+        }
+      ],
+      "title": "",
+      "id": "44158"
+    },
+    {
+      "type": "highlight",
+      "description": "It constructs a `spl_token::transfer` from the `vault ATA` back to the user's `ATA`, then `invoke_signed` with the `vault PDA seeds` to authorize the transfer on behalf of the program.",
+      "file": "solana/programs/dexalot/src/instructions/claim_balance.rs",
+      "highlight": [
+        {
+          "start": 75,
+          "end": 83
+        }
+      ],
+      "title": "",
+      "id": "44159"
+    },
+    {
+      "type": "highlight",
+      "description": "Claiming native SOL follows a similar pattern. Here, the program verifies that the SOL vault has enough lamports to cover the withdrawal request plus the minimum balance required to keep the account rent-exempt.",
+      "file": "solana/programs/dexalot/src/instructions/claim_balance.rs",
+      "highlight": [
+        {
+          "start": 137,
+          "end": 146
+        }
+      ],
+      "title": "",
+      "id": "44160"
+    },
+    {
+      "type": "textOnly",
+      "description": "With these instructions—`initialization`, `account creation`, `token deposit`, and `balance claiming`—a user can fully onboard and interact with the `DEX program`.",
+      "title": "",
+      "id": "44161"
+    }
+  ]
+}

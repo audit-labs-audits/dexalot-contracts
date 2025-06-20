@@ -1,0 +1,137 @@
+{
+  "title": "1.5: Solana Program: Cross-Chain Swaps",
+  "id": "sl5IlG9dX8sL6/iC674i2JZVliwyKlll8DbBiyr/884=",
+  "originalId": 3752,
+  "position": 40,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "This walkthrough covers the `cross_swap` instruction, showing how it locks user funds in vaults, records the cross-chain order, constructs an `XFER` payload, and sends it via `LayerZero` to an EVM chain.",
+      "title": "",
+      "id": "44225"
+    },
+    {
+      "type": "highlight",
+      "description": "The `cross_swap` handler orchestrates the following steps: it checks that the program is not paused; verifies the destination is allowed; ensures token accounts are valid; then sequentially calls `validate_cross_swap`, `execute_cross_swap`, and finally `send_cross_chain_trade`.",
+      "file": "solana/programs/dexalot/src/instructions/swap/swap_instructions/cross_swap.rs",
+      "highlight": [
+        {
+          "start": 15,
+          "end": 34
+        }
+      ],
+      "title": "",
+      "id": "44226"
+    },
+    {
+      "type": "highlight",
+      "description": "The context for `cross_swap` provides PDAs for holding SOL (`sol_vault`) and SPL tokens (`spl_vault_src_asset_ata`), along with the user's source ATA (`taker_src_asset_ata`). These vault accounts are seeded with `SOL_VAULT_SEED` and `SPL_VAULT_SEED` and are used to lock user funds.",
+      "file": "solana/programs/dexalot/src/instructions/swap/swap_instructions/cross_swap.rs",
+      "highlight": [
+        {
+          "start": 60,
+          "end": 76
+        }
+      ],
+      "title": "",
+      "id": "44227"
+    },
+    {
+      "type": "highlight",
+      "description": "In `execute_cross_swap`, a `SwapData` struct captures the trade details and `TakeFunds::from_cross_swap_context` builds the accounts needed to lock funds. The call to `take_funds` transfers the user's source tokens into the program-controlled vault.",
+      "file": "solana/programs/dexalot/src/instructions/swap/orders/cross_swap_order.rs",
+      "highlight": [
+        {
+          "start": 104,
+          "end": 112
+        }
+      ],
+      "title": "",
+      "id": "44228"
+    },
+    {
+      "type": "highlight",
+      "description": "The `take_funds` function checks if the asset is `SPL` (non-zero mint). It chooses the user's `ATA` as the source and the vault's `ATA` as the destination, then invokes `token::transfer` to move `src_amount` from the user into the program vault.",
+      "file": "solana/programs/dexalot/src/instructions/swap/utils.rs",
+      "highlight": [
+        {
+          "start": 117,
+          "end": 124
+        }
+      ],
+      "title": "",
+      "id": "44229"
+    },
+    {
+      "type": "highlight",
+      "description": "Before locking funds, `validate_cross_swap` ensures the order is not expired, verifies the off-chain signature, and checks no prior completion. It then calls `create_entry` with `COMPLETED_SWAPS_SEED` to persist a `CompletedSwapsEntry`, preventing replay.",
+      "file": "solana/programs/dexalot/src/instructions/swap/orders/cross_swap_order.rs",
+      "highlight": [
+        {
+          "start": 75,
+          "end": 90
+        }
+      ],
+      "title": "",
+      "id": "44230"
+    },
+    {
+      "type": "highlight",
+      "description": "In `send_cross_chain_trade`, the code constructs an `XFER` message for a cross-chain trade by calling `XFER::new` with transaction type `CCTrade`, the destination trader, symbol, amounts, expiry, custom nonce data, and the program’s current `out_nonce`.",
+      "file": "solana/programs/dexalot/src/instructions/swap/orders/cross_swap_order.rs",
+      "highlight": [
+        {
+          "start": 134,
+          "end": 142
+        }
+      ],
+      "title": "",
+      "id": "44231"
+    },
+    {
+      "type": "highlight",
+      "description": "The `XFER` struct in Rust mirrors the Solidity layout. The `new` method populates its fields: `custom_data` holds the 18-byte nonce, `timestamp`, `nonce`, `transaction` type, `message_type::XFER`, `trader` address, `symbol`, and `quantity`.",
+      "file": "solana/programs/dexalot/src/xfer.rs",
+      "highlight": [
+        {
+          "start": 186,
+          "end": 194
+        }
+      ],
+      "title": "",
+      "id": "44232"
+    },
+    {
+      "type": "highlight",
+      "description": "The code then builds `EndpointQuoteParams` with the packed payload and calls the `LayerZero` `quote` CPI. It inspects the returned `MessagingFee` to ensure no `LZ` token fee is required.",
+      "file": "solana/programs/dexalot/src/instructions/swap/orders/cross_swap_order.rs",
+      "highlight": [
+        {
+          "start": 153,
+          "end": 160
+        }
+      ],
+      "title": "",
+      "id": "44233"
+    },
+    {
+      "type": "highlight",
+      "description": "Finally, the program invokes the `LayerZero` `send` CPI with `invoke_signed`, passing the `portfolio PDA` as signer. This sends the cross-chain payload into the destination EVM chain context and increments `out_nonce`.",
+      "file": "solana/programs/dexalot/src/instructions/swap/orders/cross_swap_order.rs",
+      "highlight": [
+        {
+          "start": 218,
+          "end": 226
+        }
+      ],
+      "title": "",
+      "id": "44234"
+    },
+    {
+      "type": "textOnly",
+      "description": "With user funds locked, the order persisted on `Solana`, and the `XFER` message sent via `LayerZero`, the cross-chain swap is now en route to the EVM chain for execution.",
+      "title": "",
+      "id": "44235"
+    }
+  ]
+}

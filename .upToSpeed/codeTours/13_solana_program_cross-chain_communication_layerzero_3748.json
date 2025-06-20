@@ -1,0 +1,209 @@
+{
+  "title": "1.3: Solana Program: Cross-Chain Communication (LayerZero)",
+  "id": "f03jAspA4bqqEJznkIByvihGzkXwSny3CpJLilKOKYg=",
+  "originalId": 3748,
+  "position": 38,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "This walkthrough dives into how the `Dexalot Solana program` receives and authenticates `LayerZero` messages, decodes them into a standard format, and settles cross-chain transfers on `Solana`.",
+      "title": "",
+      "id": "44344"
+    },
+    {
+      "type": "highlight",
+      "description": "This is the `lz_receive` function, the entrypoint for all incoming LayerZero messages. The `Context<LzReceive>` argument binds all required accounts, and `LzReceiveParams` carries the raw LayerZero message fields.",
+      "file": "solana/programs/dexalot/src/instructions/lz_receive.rs",
+      "highlight": [
+        {
+          "start": 75,
+          "end": 84
+        }
+      ],
+      "title": "",
+      "id": "44345"
+    },
+    {
+      "type": "highlight",
+      "description": "The `LzReceiveParams` struct:\nIt contains `src_eid: u32`, `sender: [u8; 32]`, `nonce: u64`, `guid: [u8; 32]`, `message: Vec<u8>`, and `extra_data: Vec<u8>`—all data delivered by `LayerZero`.",
+      "file": "solana/programs/dexalot/src/instructions/lz_receive.rs",
+      "highlight": [
+        {
+          "start": 248,
+          "end": 256
+        }
+      ],
+      "title": "",
+      "id": "44346"
+    },
+    {
+      "type": "highlight",
+      "description": "`get_accounts_for_clear` builds PDAs (nonce, payload-hash, endpoint settings) under the hard-coded `ENDPOINT_ID`. By invoking only that program id, it ensures messages truly come from LayerZero’s on-chain endpoint.",
+      "file": "solana/programs/dexalot/src/cpi_utils.rs",
+      "highlight": [
+        {
+          "start": 77,
+          "end": 87
+        }
+      ],
+      "title": "",
+      "id": "44347"
+    },
+    {
+      "type": "highlight",
+      "description": "This signed CPI \"clears\" the message on the LayerZero endpoint, preventing it from being processed again.",
+      "file": "solana/programs/dexalot/src/instructions/lz_receive.rs",
+      "highlight": [
+        {
+          "start": 116,
+          "end": 125
+        }
+      ],
+      "title": "",
+      "id": "44348"
+    },
+    {
+      "type": "highlight",
+      "description": "The message is unpacked into an `xfer` struct. The program then prepares for token validation, getting the token list and checking if the transfer is for the native token.",
+      "file": "solana/programs/dexalot/src/instructions/lz_receive.rs",
+      "highlight": [
+        {
+          "start": 127,
+          "end": 135
+        }
+      ],
+      "title": "",
+      "id": "44349"
+    },
+    {
+      "type": "highlight",
+      "description": "`XFERSolana` is the in-program representation of the 104-byte LayerZero payload.  It maps to fields:\n- `nonce: u64`\n- `transaction: Tx` (enum)\n- `trader: Pubkey`\n- `token_mint: Pubkey`\n- `quantity: u64`\n- `timestamp: u32`\n- `custom_data: [u8; 18]`\n- `message_type: XChainMsgType`.",
+      "file": "solana/programs/dexalot/src/xfer.rs",
+      "highlight": [
+        {
+          "start": 7,
+          "end": 17
+        }
+      ],
+      "title": "",
+      "id": "44350"
+    },
+    {
+      "type": "highlight",
+      "description": "The `Tx` enum (`u8`) enumerates message types.  Notably:\n- `Deposit` = 1 (straight token credit)\n- `CCTrade` = 11 (cross-chain swap settlement).",
+      "file": "solana/programs/dexalot/src/xfer.rs",
+      "highlight": [
+        {
+          "start": 131,
+          "end": 139
+        }
+      ],
+      "title": "",
+      "id": "44351"
+    },
+    {
+      "type": "highlight",
+      "description": "**Optional SOL airdrop:**\nA flag in the payload can trigger a small **SOL** bonus for the user on each cross-chain arrival.",
+      "file": "solana/programs/dexalot/src/instructions/lz_receive.rs",
+      "highlight": [
+        {
+          "start": 143,
+          "end": 151
+        }
+      ],
+      "title": "",
+      "id": "44352"
+    },
+    {
+      "type": "highlight",
+      "description": "**Dispatch logic:**\n\nThe logic forks here to handle native SOL and SPL token transfers separately.",
+      "file": "solana/programs/dexalot/src/instructions/lz_receive.rs",
+      "highlight": [
+        {
+          "start": 181,
+          "end": 190
+        }
+      ],
+      "title": "",
+      "id": "44353"
+    },
+    {
+      "type": "highlight",
+      "description": "The function starts by validating the transfer amount and authorizing the recipient.",
+      "file": "solana/programs/dexalot/src/instructions/process_xfer_payload.rs",
+      "highlight": [
+        {
+          "start": 25,
+          "end": 35
+        }
+      ],
+      "title": "",
+      "id": "44354"
+    },
+    {
+      "type": "highlight",
+      "description": "This executes a signed transfer, moving **SOL** from the vault PDA to the user.",
+      "file": "solana/programs/dexalot/src/instructions/process_xfer_payload.rs",
+      "highlight": [
+        {
+          "start": 73,
+          "end": 83
+        }
+      ],
+      "title": "",
+      "id": "44355"
+    },
+    {
+      "type": "highlight",
+      "description": "In `process_xfer_payload_spl`, it deserializes the vault `ATA`, checks if `CCTrade` with insufficient tokens, and enqueues a `PendingSwap` if needed.",
+      "file": "solana/programs/dexalot/src/instructions/process_xfer_payload.rs",
+      "highlight": [
+        {
+          "start": 112,
+          "end": 121
+        }
+      ],
+      "title": "",
+      "id": "44356"
+    },
+    {
+      "type": "highlight",
+      "description": "Otherwise, it constructs an SPL transfer to credit the trader's Associated Token Account (ATA).",
+      "file": "solana/programs/dexalot/src/instructions/process_xfer_payload.rs",
+      "highlight": [
+        {
+          "start": 144,
+          "end": 152
+        }
+      ],
+      "title": "",
+      "id": "44357"
+    },
+    {
+      "type": "highlight",
+      "description": "Both handlers emit this `XChainFinalized` event, which allows on-chain indexing of completed cross-chain transfers.",
+      "file": "solana/programs/dexalot/src/instructions/process_xfer_payload.rs",
+      "highlight": [
+        {
+          "start": 87,
+          "end": 94
+        }
+      ],
+      "title": "",
+      "id": "44358"
+    },
+    {
+      "type": "highlight",
+      "description": "Downstream, `cross_swap` validates the trader’s Associated Token Account (ATA) for the source asset. This closes the loop, turning a cross-chain deposit into swap liquidity.",
+      "file": "solana/programs/dexalot/src/instructions/swap/swap_instructions/cross_swap.rs",
+      "highlight": [
+        {
+          "start": 109,
+          "end": 114
+        }
+      ],
+      "title": "",
+      "id": "44359"
+    }
+  ]
+}

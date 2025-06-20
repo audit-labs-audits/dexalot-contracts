@@ -1,0 +1,201 @@
+{
+  "title": "1.1: Solana Program: State and Core Data Structures",
+  "id": "HXhRRK9HUTrH0T9vZIDCL+m2jUXhRSW/+Efqe2KL/4s=",
+  "originalId": 3746,
+  "position": 36,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "This guide covers Dexalot’s core on-chain account definitions in `state.rs`, then reviews its custom errors and events.",
+      "title": "",
+      "id": "44287"
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "solana/programs/dexalot/src/state.rs"
+      ],
+      "description": "`state.rs` defines all persistent PDAs and supporting structs used by the program.",
+      "title": "",
+      "id": "44288"
+    },
+    {
+      "type": "highlight",
+      "description": "`GlobalConfig` holds system-wide parameters: **deposit toggles**, **pause state**, **chain IDs**, **airdrop amount**, the `swap_signer` Ethereum-style address, and an **outbound message nonce**.",
+      "file": "solana/programs/dexalot/src/state.rs",
+      "highlight": [
+        {
+          "start": 27,
+          "end": 38
+        }
+      ],
+      "title": "",
+      "id": "44289"
+    },
+    {
+      "type": "highlight",
+      "description": "`BannedAccount` marks a trader as banned. It contains a single `BanReason` field to categorize why access is blocked.",
+      "file": "solana/programs/dexalot/src/state.rs",
+      "highlight": [
+        {
+          "start": 61,
+          "end": 69
+        }
+      ],
+      "title": "",
+      "id": "44290"
+    },
+    {
+      "type": "highlight",
+      "description": "`BanReason` enumerates possible ban categories: `NotBanned`, `Ofac`, `Abuse`, and `Terms`.",
+      "file": "solana/programs/dexalot/src/state.rs",
+      "highlight": [
+        {
+          "start": 72,
+          "end": 79
+        }
+      ],
+      "title": "",
+      "id": "44291"
+    },
+    {
+      "type": "highlight",
+      "description": "**TokenList** is a paginated **PDA** listing supported token mints via a `Vec<Pubkey>` and an optional `next_page Pubkey` for pagination.",
+      "file": "solana/programs/dexalot/src/state.rs",
+      "highlight": [
+        {
+          "start": 83,
+          "end": 91
+        }
+      ],
+      "title": "",
+      "id": "44292"
+    },
+    {
+      "type": "highlight",
+      "description": "`TokenDetails` stores metadata for one token: its `decimals`, a fixed-length 32-byte `symbol`, and the `mint Pubkey`.",
+      "file": "solana/programs/dexalot/src/state.rs",
+      "highlight": [
+        {
+          "start": 95,
+          "end": 102
+        }
+      ],
+      "title": "",
+      "id": "44293"
+    },
+    {
+      "type": "textOnly",
+      "description": "There is no `DexalotAccount` or `TokenMap` struct. User balances are held in `SPL` vault `PDAs` rather than in a custom on-chain account.",
+      "title": "",
+      "id": "44294"
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "solana/programs/dexalot/src/instructions/swap/orders/swap_order.rs"
+      ],
+      "description": "**Order** in `swap_order.rs` represents an on-chain swap record signed off-chain by the maker.",
+      "title": "",
+      "id": "44295"
+    },
+    {
+      "type": "highlight",
+      "description": "Order fields: `maker_asset`, `taker_asset`, `taker Pubkey`, `maker_amount`, `taker_amount`, `expiry timestamp`, `dest_trader Pubkey`, and a `nonce` to prevent replay.",
+      "file": "solana/programs/dexalot/src/instructions/swap/orders/swap_order.rs",
+      "highlight": [
+        {
+          "start": 12,
+          "end": 21
+        }
+      ],
+      "title": "",
+      "id": "44296"
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "solana/programs/dexalot/src/instructions/swap/orders/cross_swap_order.rs"
+      ],
+      "description": "`XChainSwap` in `cross_swap_order.rs` represents a cross-chain swap request.",
+      "title": "",
+      "id": "44297"
+    },
+    {
+      "type": "highlight",
+      "description": "`XChainSwap` extends `Order` with `maker_symbol` (**32-byte**) and `dest_chain_id` to support cross-chain messaging.",
+      "file": "solana/programs/dexalot/src/instructions/swap/orders/cross_swap_order.rs",
+      "highlight": [
+        {
+          "start": 27,
+          "end": 38
+        }
+      ],
+      "title": "",
+      "id": "44298"
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "solana/programs/dexalot/src/errors.rs"
+      ],
+      "description": "`errors.rs` defines `DexalotError`, the program’s custom error codes and messages.",
+      "title": "",
+      "id": "44299"
+    },
+    {
+      "type": "highlight",
+      "description": "`DexalotError` covers cases like `OrderExpired`, `NotEnoughNativeBalance`, `NotEnoughSplTokenBalance`, `AccountBanned`, `InvalidSigner`, and more.",
+      "file": "solana/programs/dexalot/src/errors.rs",
+      "highlight": [
+        {
+          "start": 3,
+          "end": 15
+        }
+      ],
+      "title": "",
+      "id": "44300"
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "solana/programs/dexalot/src/events.rs"
+      ],
+      "description": "`events.rs` declares events emitted for off-chain clients to consume.",
+      "title": "",
+      "id": "44301"
+    },
+    {
+      "type": "highlight",
+      "description": "`BanStatusChangedEvent`, `RoleGrantedEvent`, and `RoleRevokedEvent` signal ban and role changes.",
+      "file": "solana/programs/dexalot/src/events.rs",
+      "highlight": [
+        {
+          "start": 9,
+          "end": 27
+        }
+      ],
+      "title": "",
+      "id": "44302"
+    },
+    {
+      "type": "highlight",
+      "description": "`PortfolioUpdatedEvent` and `SwapExecuted` notify on deposits and swap completions; additional events cover `SOL` transfers and queue actions.",
+      "file": "solana/programs/dexalot/src/events.rs",
+      "highlight": [
+        {
+          "start": 29,
+          "end": 60
+        }
+      ],
+      "title": "",
+      "id": "44303"
+    },
+    {
+      "type": "textOnly",
+      "description": "This tour covered Dexalot's key on-chain data structures:\n\n- **State (`state.rs`):** `GlobalConfig` for system parameters, `BannedAccount` for access control, and `TokenList` for supported tokens. User balances are held in standard SPL vaults.\n\n- **Orders (`swap_order.rs`, `cross_swap_order.rs`):** `Order` (on-chain) and `XChainSwap` (cross-chain) structs define swap data signed off-chain.\n\n- **Program Interfaces (`errors.rs`, `events.rs`):** The program uses custom `DexalotError` codes and emits events like `SwapExecuted` for off-chain monitoring.",
+      "title": "",
+      "id": "44304"
+    }
+  ]
+}

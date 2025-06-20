@@ -1,0 +1,345 @@
+{
+  "title": "1.6: Solana Program: Admin and Configuration",
+  "id": "ZvKfpmvnUb/1ik8eL6A8IyioD35u1+lUXq4w0RiM5hs=",
+  "originalId": 3770,
+  "position": 41,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "We'll begin by exploring how the program enforces role-based permissions, then examine configuration settings, cross-chain setup, token management, and finally security measures against malicious accounts.",
+      "title": "",
+      "id": "44438"
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "solana/programs/dexalot/src/instructions/roles.rs"
+      ],
+      "description": "This file implements the core role management instructions. It defines `admin` (role 0) and `rebalancer` (role 1) roles and controls how they’re granted and revoked via **PDAs**.",
+      "title": "",
+      "id": "44439"
+    },
+    {
+      "type": "highlight",
+      "description": "The `add_admin` instruction (lines 8–27) checks that the caller is an existing admin (via their PDA), ensures the new account isn’t the default zero key, creates the Admin PDA for the new admin, and emits a `RoleGrantedEvent` with `role=[0;32]`.",
+      "file": "solana/programs/dexalot/src/instructions/roles.rs",
+      "highlight": [
+        {
+          "start": 8,
+          "end": 27
+        }
+      ],
+      "title": "",
+      "id": "44440"
+    },
+    {
+      "type": "highlight",
+      "description": "The `remove_admin` instruction revokes an admin role: after the same PDA owner check, it closes the `Admin PDA` (refunds lamports to a receiver) and emits `RoleRevokedEvent` with `role=[0;32]`.",
+      "file": "solana/programs/dexalot/src/instructions/roles.rs",
+      "highlight": [
+        {
+          "start": 34,
+          "end": 53
+        }
+      ],
+      "title": "",
+      "id": "44441"
+    },
+    {
+      "type": "highlight",
+      "description": "The `add_rebalancer` instruction (lines 164–183) works similarly, using `role=[1;32]` to signal a rebalancer grant. Only an `admin PDA` may call it.",
+      "file": "solana/programs/dexalot/src/instructions/roles.rs",
+      "highlight": [
+        {
+          "start": 164,
+          "end": 183
+        }
+      ],
+      "title": "",
+      "id": "44442"
+    },
+    {
+      "type": "highlight",
+      "description": "The `remove_rebalancer` instruction revokes the **rebalancer role**, closes the `Rebalancer PDA`, and emits `RoleRevokedEvent` with `role=[1;32]`.",
+      "file": "solana/programs/dexalot/src/instructions/roles.rs",
+      "highlight": [
+        {
+          "start": 185,
+          "end": 203
+        }
+      ],
+      "title": "",
+      "id": "44443"
+    },
+    {
+      "type": "textOnly",
+      "description": "Next, we’ll look at how the global parameters of the protocol are read and modified by admins.",
+      "title": "",
+      "id": "44444"
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "solana/programs/dexalot/src/instructions/global_config.rs"
+      ],
+      "description": "In `global_config.rs`, admins read or update fields on the single `GlobalConfig` struct stored inside the `Portfolio` account.\n\nAll setters require the caller’s PDA to match `[ADMIN_SEED, authority]`.",
+      "title": "",
+      "id": "44445"
+    },
+    {
+      "type": "highlight",
+      "description": "`get_global_config` returns a clone of the `GlobalConfig` inside `Portfolio`. It ensures the caller is an admin via a PDA owner check.",
+      "file": "solana/programs/dexalot/src/instructions/global_config.rs",
+      "highlight": [
+        {
+          "start": 22,
+          "end": 31
+        }
+      ],
+      "title": "",
+      "id": "44446"
+    },
+    {
+      "type": "highlight",
+      "description": "`set_allow_deposit` flips `allow_deposit` on or off. The PDA owner check prevents unauthorized writes.",
+      "file": "solana/programs/dexalot/src/instructions/global_config.rs",
+      "highlight": [
+        {
+          "start": 33,
+          "end": 43
+        }
+      ],
+      "title": "",
+      "id": "44447"
+    },
+    {
+      "type": "highlight",
+      "description": "`set_paused` toggles `program_paused`. When paused, operations like removing tokens require this flag (see token section).",
+      "file": "solana/programs/dexalot/src/instructions/global_config.rs",
+      "highlight": [
+        {
+          "start": 46,
+          "end": 57
+        }
+      ],
+      "title": "",
+      "id": "44448"
+    },
+    {
+      "type": "highlight",
+      "description": "`set_native_deposits_restricted` enforces deposit restrictions on **SOL** deposits.\n\nAdmins can enable or disable this guardrail.",
+      "file": "solana/programs/dexalot/src/instructions/global_config.rs",
+      "highlight": [
+        {
+          "start": 59,
+          "end": 76
+        }
+      ],
+      "title": "",
+      "id": "44449"
+    },
+    {
+      "type": "highlight",
+      "description": "`set_default_chain` (with `SetDefaultChainId { chain_id }`) sets the `LayerZero` default chain ID for cross-chain operations.",
+      "file": "solana/programs/dexalot/src/instructions/global_config.rs",
+      "highlight": [
+        {
+          "start": 78,
+          "end": 88
+        }
+      ],
+      "title": "",
+      "id": "44450"
+    },
+    {
+      "type": "highlight",
+      "description": "`set_airdrop` adjusts the airdrop token amount. It accepts `SetAirdropParams { amount }`.",
+      "file": "solana/programs/dexalot/src/instructions/global_config.rs",
+      "highlight": [
+        {
+          "start": 95,
+          "end": 105
+        }
+      ],
+      "title": "",
+      "id": "44451"
+    },
+    {
+      "type": "highlight",
+      "description": "`set_swap_signer` updates the 20-byte swap signer address used for validating RFQ swaps.",
+      "file": "solana/programs/dexalot/src/instructions/global_config.rs",
+      "highlight": [
+        {
+          "start": 112,
+          "end": 121
+        }
+      ],
+      "title": "",
+      "id": "44452"
+    },
+    {
+      "type": "textOnly",
+      "description": "With global parameters covered, let’s see how `LayerZero` endpoints and destinations are configured.",
+      "title": "",
+      "id": "44453"
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "solana/programs/dexalot/src/instructions/set_remote.rs"
+      ],
+      "description": "`set_remote` writes a `LayerZero` endpoint address for a destination chain (`dst_eid`).\n\nIt uses **PDA** [`REMOTE_SEED`, `dst_eid_be`] and only an admin **PDA** may call it.",
+      "title": "",
+      "id": "44454"
+    },
+    {
+      "type": "highlight",
+      "description": "In `set_remote`, after verifying the admin PDA’s owner, it stores `remote` bytes and captures the bump in `remote.bump`.",
+      "file": "solana/programs/dexalot/src/instructions/set_remote.rs",
+      "highlight": [
+        {
+          "start": 32,
+          "end": 41
+        }
+      ],
+      "title": "",
+      "id": "44455"
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "solana/programs/dexalot/src/instructions/add_destination.rs"
+      ],
+      "description": "`add_destination` registers a supported token on a specific chain for cross-chain trades.\n\nIt initializes `AllowedDestinationEntry` at PDA `[CCTRADE_ALLOWED_DEST_SEED, eid_be, token_address]`.",
+      "title": "",
+      "id": "44456"
+    },
+    {
+      "type": "highlight",
+      "description": "`add_destination` only does a `PDA` owner check on the admin, then returns. The mere existence of that `PDA` entry signals the protocol to allow cross-chain transfer of that token.",
+      "file": "solana/programs/dexalot/src/instructions/add_destination.rs",
+      "highlight": [
+        {
+          "start": 36,
+          "end": 44
+        }
+      ],
+      "title": "",
+      "id": "44457"
+    },
+    {
+      "type": "textOnly",
+      "description": "Next, we’ll see how new tokens are brought into the system and managed.",
+      "title": "",
+      "id": "44458"
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "solana/programs/dexalot/src/instructions/token.rs"
+      ],
+      "description": "`token.rs` contains `add_token` and `remove_token` to manage the on-chain `TokenList` pages and `TokenDetails` PDAs.\n\nOnly admins can call these, and removing requires the program to be paused.",
+      "title": "",
+      "id": "44459"
+    },
+    {
+      "type": "highlight",
+      "description": "`add_token` first checks the caller’s PDA owner equals the program ID. It then ensures `ctx.remaining_accounts` holds at least one `TokenList` account to update.",
+      "file": "solana/programs/dexalot/src/instructions/token.rs",
+      "highlight": [
+        {
+          "start": 15,
+          "end": 31
+        }
+      ],
+      "title": "",
+      "id": "44460"
+    },
+    {
+      "type": "highlight",
+      "description": "It loops through paged `TokenList` accounts (up to `MAX_TOKENS`). If there’s room, it pushes the mint and exits; if full and there’s a next page, it continues; otherwise errors with `TokenListFull`.",
+      "file": "solana/programs/dexalot/src/instructions/token.rs",
+      "highlight": [
+        {
+          "start": 39,
+          "end": 59
+        }
+      ],
+      "title": "",
+      "id": "44461"
+    },
+    {
+      "type": "highlight",
+      "description": "After adding, it emits `P-ADDTOKEN` via `ParameterUpdatedEvent` and logs success.",
+      "file": "solana/programs/dexalot/src/instructions/token.rs",
+      "highlight": [
+        {
+          "start": 71,
+          "end": 79
+        }
+      ],
+      "title": "",
+      "id": "44462"
+    },
+    {
+      "type": "highlight",
+      "description": "`remove_token` requires `program_paused` to be true in `GlobalConfig`. Then it finds the page containing the token, removes it, serializes back, and emits `P-REMOVETOKEN`. It also closes the `TokenDetails` PDA when the caller’s `RemoveToken` account indicates `close=receiver`.",
+      "file": "solana/programs/dexalot/src/instructions/token.rs",
+      "highlight": [
+        {
+          "start": 78,
+          "end": 90
+        }
+      ],
+      "title": "",
+      "id": "44463"
+    },
+    {
+      "type": "textOnly",
+      "description": "Finally, we cover how admins can block or unblock malicious users.",
+      "title": "",
+      "id": "44464"
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "solana/programs/dexalot/src/instructions/banned_account.rs"
+      ],
+      "description": "`banned_account.rs` provides `ban_account` and `unban_account` to create or close a `BannedAccount` PDA per user.\n\nAll operations require admin PDA authorization.",
+      "title": "",
+      "id": "44465"
+    },
+    {
+      "type": "highlight",
+      "description": "`ban_account` writes `reason` into the **PDA** at ``[`BANNED_ACCOUNT_SEED`, `account`]`` and emits a `BanStatusChangedEvent` with `banned=true`. ",
+      "file": "solana/programs/dexalot/src/instructions/banned_account.rs",
+      "highlight": [
+        {
+          "start": 7,
+          "end": 26
+        }
+      ],
+      "title": "",
+      "id": "44466"
+    },
+    {
+      "type": "highlight",
+      "description": "`unban_account` emits `BanStatusChangedEvent` with `banned=false`. The PDA account is closed automatically via the `UnbanAccount` struct’s `close=receiver` attribute.",
+      "file": "solana/programs/dexalot/src/instructions/banned_account.rs",
+      "highlight": [
+        {
+          "start": 34,
+          "end": 49
+        }
+      ],
+      "title": "",
+      "id": "44467"
+    },
+    {
+      "type": "textOnly",
+      "description": "This completes our tour of the admin and configuration functions. You now know how roles, global parameters, cross-chain endpoints, token lists, and banned accounts are managed by the Dexalot program.",
+      "title": "",
+      "id": "44468"
+    }
+  ]
+}
